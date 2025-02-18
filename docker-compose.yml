@@ -19,8 +19,11 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
-      - mysql
-      - auth_service
+      mysql:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+    restart: unless-stopped
 
   analytics_service:
     build: ./analytics_service
@@ -56,6 +59,10 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
 
   mongodb:
     image: mongo:latest
