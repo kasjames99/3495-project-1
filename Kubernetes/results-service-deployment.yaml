@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: results-service
+spec:
+  replicas: 2  # Start with 2 replicas for high availability
+  selector:
+    matchLabels:
+      app: results-service
+  template:
+    metadata:
+      labels:
+        app: results-service
+    spec:
+      containers:
+      - name: results-service
+        image: cxxflame/results-service:latest  # Replace with your registry
+        ports:
+        - containerPort: 5003
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017/"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: secret-key
+        - name: AUTH_SERVICE_URL
+          value: "http://auth-service"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5003
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5003
+          initialDelaySeconds: 30
+          periodSeconds: 20

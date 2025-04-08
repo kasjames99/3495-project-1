@@ -52,6 +52,10 @@ def validate_token():
     except:
         return jsonify({'valid': False}), 401
 
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "ok"})
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

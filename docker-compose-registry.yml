@@ -1,12 +1,10 @@
 services:
   auth_service:
-    build: ./auth_service
+    image: cxxflame/auth-service:latest
     ports:
       - "5000:5000"
     environment:
       - SECRET_KEY=${SECRET_KEY}
-    volumes:
-      - ./auth_service:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -15,7 +13,7 @@ services:
       start_period: 10s
 
   data_entry_service:
-    build: ./data_entry_service
+    image: cxxflame/data-entry-service:latest
     ports:
       - "5001:5001"
     environment:
@@ -29,7 +27,7 @@ services:
       mysql:
         condition: service_healthy
       auth_service:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
@@ -39,7 +37,7 @@ services:
       start_period: 10s
 
   analytics_service:
-    build: ./analytics_service
+    image: cxxflame/analytics-service:latest
     ports:
       - "5002:5002"
     environment:
@@ -49,8 +47,10 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MONGO_URI=mongodb://mongodb:27017/
     depends_on:
-      - mysql
-      - mongodb
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
       interval: 30s
@@ -59,7 +59,7 @@ services:
       start_period: 10s
 
   results_service:
-    build: ./results_service
+    image: cxxflame/results-service:latest
     ports:
       - "5003:5003"
     environment:
@@ -67,8 +67,10 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - AUTH_SERVICE_URL=http://auth_service:5000
     depends_on:
-      - mongodb
-      - auth_service
+      mongodb:
+        condition: service_started
+      auth_service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
       interval: 30s

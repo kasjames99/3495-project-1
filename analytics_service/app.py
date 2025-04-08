@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 import mysql.connector
 from pymongo import MongoClient
 import schedule
@@ -22,11 +22,9 @@ mongo_db = mongo_client['analytics_db']
 mongo_collection = mongo_db['analytics']
 
 def calculate_analytics():
-    # Connect to MySQL
     mysql_conn = mysql.connector.connect(**mysql_config)
     cursor = mysql_conn.cursor()
     
-    # Get analytics
     cursor.execute("""
         SELECT 
             MAX(value) as max_value,
@@ -38,7 +36,6 @@ def calculate_analytics():
     
     result = cursor.fetchone()
     
-    # Store in MongoDB
     analytics = {
         'max_value': result[0],
         'min_value': result[1],
@@ -58,8 +55,11 @@ def init_scheduler():
         schedule.run_pending()
         time.sleep(1)
 
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "ok"})
+
 if __name__ == '__main__':
-    # Run the scheduler in a separate thread
     import threading
     scheduler_thread = threading.Thread(target=init_scheduler)
     scheduler_thread.start()

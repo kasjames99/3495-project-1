@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  mysql-database: "data_entry_db"
+  mysql-user: "app_user"
+  analytics-update-interval: "300"

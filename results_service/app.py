@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, session, request
+from flask import Flask, render_template, redirect, url_for, session, request, jsonify
 from pymongo import MongoClient
 import requests
 from functools import wraps
@@ -9,7 +9,6 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
 
-# MongoDB configuration
 mongo_client = MongoClient(os.getenv('MONGO_URI', 'mongodb://localhost:27017/'))
 mongo_db = mongo_client['analytics_db']
 mongo_collection = mongo_db['analytics']
@@ -25,7 +24,7 @@ def login_required(f):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        response = requests.post('http://auth_service:5000/login', json={
+        response = requests.post('http://auth-service/login', json={
             'username': request.form['username'],
             'password': request.form['password']
         })
@@ -40,12 +39,15 @@ def login():
 @app.route('/results')
 @login_required
 def results():
-    # Get the latest analytics from MongoDB
     analytics = mongo_collection.find_one(
         sort=[('timestamp', -1)]
     )
     
     return render_template('results.html', analytics=analytics)
 
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "ok"})
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5003)

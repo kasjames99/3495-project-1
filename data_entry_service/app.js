@@ -5,7 +5,6 @@ const session = require('express-session');
 const config = require('./config');
 const app = express();
 
-// Middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
@@ -13,13 +12,11 @@ app.use(session({
     secret: config.session.secret,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // set to true if using https
+    cookie: { secure: false }
 }));
 
-// MySQL Connection Pool
 const db = mysql.createPool(config.mysql);
 
-// Wait for database function
 const waitForDb = async (maxAttempts = 30, delay = 2000) => {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -35,7 +32,6 @@ const waitForDb = async (maxAttempts = 30, delay = 2000) => {
     throw new Error('Could not connect to database after multiple attempts');
 };
 
-// Initialize database
 const initDb = async () => {
     try {
         await db.promise().query(`
@@ -52,7 +48,6 @@ const initDb = async () => {
     }
 };
 
-// Middleware to check login
 const loginRequired = (req, res, next) => {
     if (!req.session.token) {
         return res.redirect('/login');
@@ -60,7 +55,6 @@ const loginRequired = (req, res, next) => {
     next();
 };
 
-// Routes
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
@@ -109,7 +103,6 @@ app.post('/data_entry', loginRequired, async (req, res) => {
             [value]
         );
 
-        // Verify the insert
         const [results] = await db.promise().query(
             'SELECT * FROM data ORDER BY id DESC LIMIT 1'
         );
@@ -129,7 +122,10 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-// Error handling middleware
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).render('error', { 
@@ -137,7 +133,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Initialize and start server
 const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
@@ -156,4 +151,4 @@ const startServer = async () => {
 
 startServer();
 
-module.exports = app; // for testing purposes
+module.exports = app;

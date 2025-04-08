@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-entry-service
+spec:
+  replicas: 2  # Start with 2 replicas for high availability
+  selector:
+    matchLabels:
+      app: data-entry-service
+  template:
+    metadata:
+      labels:
+        app: data-entry-service
+    spec:
+      containers:
+      - name: data-entry-service
+        image: cxxflame/data-entry-service:latest
+        ports:
+        - containerPort: 5001
+        env:
+        - name: MYSQL_HOST
+          value: "mysql"
+        - name: MYSQL_USER
+          value: "app_user"
+        - name: MYSQL_PASSWORD
+          value: "app_password"
+        - name: MYSQL_DATABASE
+          value: "data_entry_db"
+        - name: SECRET_KEY
+          value: "your-very-secret-key-here"
+        - name: AUTH_SERVICE_URL
+          value: "http://auth-service"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 30
+          periodSeconds: 20
