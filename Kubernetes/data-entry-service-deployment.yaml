@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: data-entry-service
 spec:
-  replicas: 2  # Start with 2 replicas for high availability
+  replicas: 2  # Changed back to 2 replicas for production
   selector:
     matchLabels:
       app: data-entry-service
@@ -30,22 +30,20 @@ spec:
           value: "your-very-secret-key-here"
         - name: AUTH_SERVICE_URL
           value: "http://auth-service"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "300m"
         readinessProbe:
           httpGet:
             path: /health
             port: 5001
-          initialDelaySeconds: 15
-          periodSeconds: 5
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /health
             port: 5001
-          initialDelaySeconds: 30
-          periodSeconds: 20
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3

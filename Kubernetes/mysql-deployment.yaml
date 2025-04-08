@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: mysql
 spec:
-  replicas: 1  # Databases typically don't scale horizontally without special configuration
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
@@ -14,53 +14,31 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: mysql:8.0
+        image: mysql:5.7
         ports:
         - containerPort: 3306
         env:
         - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mysql-root-password
+          value: "password"
         - name: MYSQL_DATABASE
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: mysql-database
+          value: "data_entry_db"
         - name: MYSQL_USER
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: mysql-user
+          value: "app_user"
         - name: MYSQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mysql-password
-        volumeMounts:
-        - name: mysql-persistent-storage
-          mountPath: /var/lib/mysql
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+          value: "app_password"
+        args:
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        - --default-authentication-plugin=mysql_native_password
         readinessProbe:
           exec:
-            command: ["mysqladmin", "ping", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+            command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
         livenessProbe:
           exec:
-            command: ["mysqladmin", "ping", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-          initialDelaySeconds: 30
-          periodSeconds: 10
+            command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+          initialDelaySeconds: 45
+          periodSeconds: 20
           timeoutSeconds: 5
-      volumes:
-      - name: mysql-persistent-storage
-        persistentVolumeClaim:
-          claimName: mysql-pvc

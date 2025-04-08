@@ -50,7 +50,7 @@ def calculate_analytics():
     mysql_conn.close()
 
 def init_scheduler():
-    schedule.every(5).minutes.do(calculate_analytics)
+    schedule.every(1).minutes.do(calculate_analytics)
     while True:
         schedule.run_pending()
         time.sleep(1)

@@ -8,4 +8,3 @@ spec:
     targetPort: 3306
   selector:
     app: mysql
-  clusterIP: None  # Headless service for stateful applications
